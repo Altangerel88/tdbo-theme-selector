@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_svg: ^2.2.4
+  path_parsing: ^1.1.0
 
 dev_dependencies:
   flutter_lints: ^6.0.0
