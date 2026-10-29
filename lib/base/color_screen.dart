@@ -82,12 +82,13 @@ class _ColorScreenState extends State<ColorScreen> {
                   curve: Curves.easeOut,
                   builder: (context, l, _) => LayoutBuilder(
                     builder: (context, c) {
-                      // Icon block: 4 above, 60 icon, 16 below.
-                      const iconBlock = 80.0;
-                      // The card takes 85% of the height left after the icon,
-                      // with wide side margins; icon and card sit centred in
-                      // the space.
-                      final boxHeight = (c.maxHeight - iconBlock) * 0.85;
+                      // Icon block: 4 above, 60 icon, 16 below; caption 32.
+                      const iconBlock = 80.0, caption = 32.0;
+                      // The card takes 85% of the height left after the icon
+                      // and caption, with wide side margins; all of it sits
+                      // centred in the space.
+                      final boxHeight =
+                          (c.maxHeight - iconBlock - caption) * 0.85;
                       return Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -103,7 +104,25 @@ class _ColorScreenState extends State<ColorScreen> {
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 36,
                               ),
-                              child: _PreviewBox(look: l),
+                              child: _BackdropFan(
+                                look: l,
+                                selected: _current.backdrop,
+                                onSelect: (b) =>
+                                    _set(_current.copyWith(backdrop: b)),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: caption,
+                            child: Center(
+                              child: Text(
+                                _current.backdrop.label,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: l.muted,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -173,8 +192,6 @@ class _ColorScreenState extends State<ColorScreen> {
   }
 }
 
-/// Base's tinted box with the phone peeking up from its bottom edge: the
-/// draft colour washed into the draft mode's background, and the real home.
 /// The TDB app icon with the soft shadow it has on a home screen.
 class _AppIcon extends StatelessWidget {
   const _AppIcon({required this.look});
@@ -199,28 +216,75 @@ class _AppIcon extends StatelessWidget {
   );
 }
 
-/// Base's tinted box with the phone peeking up from its bottom edge: the
-/// dashboard skeleton in the chosen Горим and Өнгө.
-class _PreviewBox extends StatelessWidget {
-  const _PreviewBox({required this.look});
+/// Дэвсгэр: a fan of preview cards, one per [Backdrop], in the chosen Горим
+/// and Өнгө. The centre card is the choice; its neighbours sit smaller and
+/// lower behind it. Swipe, or tap a side card, to bring it to the centre.
+///
+/// A transparent [PageView] on top does the dragging and snapping; the cards
+/// are drawn underneath from its position, sorted so the centre one is in
+/// front. Cards are taller than the box and clipped at its bottom edge.
+class _BackdropFan extends StatefulWidget {
+  const _BackdropFan({
+    required this.look,
+    required this.selected,
+    required this.onSelect,
+  });
+
   final Look look;
+  final Backdrop selected;
+  final ValueChanged<Backdrop> onSelect;
+
+  @override
+  State<_BackdropFan> createState() => _BackdropFanState();
+}
+
+class _BackdropFanState extends State<_BackdropFan> {
+  static const _slot = 0.27; // page width, as a share of the box
+  static const _card = 0.52; // centre card width, as a share of the box
+
+  late final _pages = PageController(
+    viewportFraction: _slot,
+    initialPage: widget.selected.index,
+  );
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final look = widget.look;
     return LayoutBuilder(
       builder: (context, c) {
-        const top = 22.0;
-        const phone = TdboHomePreview.phone;
-        // A fixed share of the width; the box's height only decides how much
-        // of the phone shows.
-        final width = c.maxWidth * 0.62;
-        // The frame's 40px corners, scaled.
-        final radius = 40 * width / phone.width;
+        final w = c.maxWidth;
+        final cardW = w * _card;
+        final radius = 40 * cardW / TdboHomePreview.phone.width;
+        final cards = [
+          for (final b in Backdrop.values)
+            RepaintBoundary(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(radius),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(
+                        alpha: look.isDark ? 0.40 : 0.14,
+                      ),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(radius),
+                  child: TdboHomePreview(look: look, width: cardW, backdrop: b),
+                ),
+              ),
+            ),
+        ];
 
-        // The phone is taller than the box on purpose: it runs past the
-        // bottom edge and is clipped there. A Positioned child gets unbounded
-        // height, so the preview keeps its full size instead of shrinking to
-        // fit (which left gaps beside it).
         return Container(
           decoration: BoxDecoration(
             color: look.tint,
@@ -229,31 +293,39 @@ class _PreviewBox extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child: Stack(
             children: [
-              Positioned(
-                top: top,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(radius),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(
-                            alpha: look.isDark ? 0.35 : 0.10,
-                          ),
-                          blurRadius: 24,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(radius),
-                      ),
-                      child: TdboHomePreview(look: look, width: width),
+              AnimatedBuilder(
+                animation: _pages,
+                builder: (context, _) {
+                  final page =
+                      _pages.hasClients && _pages.position.haveDimensions
+                      ? _pages.page!
+                      : widget.selected.index.toDouble();
+                  final order = [for (var i = 0; i < cards.length; i++) i]
+                    ..sort(
+                      (a, b) => (b - page).abs().compareTo((a - page).abs()),
+                    );
+                  return Stack(
+                    children: [
+                      for (final i in order)
+                        _place(i, page, w, cardW, cards[i]),
+                    ],
+                  );
+                },
+              ),
+              PageView.builder(
+                controller: _pages,
+                itemCount: cards.length,
+                onPageChanged: (i) => widget.onSelect(Backdrop.values[i]),
+                itemBuilder: (context, i) => Semantics(
+                  button: true,
+                  selected: i == widget.selected.index,
+                  label: '${Backdrop.values[i].label} дэвсгэр',
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _pages.animateToPage(
+                      i,
+                      duration: const Duration(milliseconds: 360),
+                      curve: Curves.easeOutCubic,
                     ),
                   ),
                 ),
@@ -262,6 +334,24 @@ class _PreviewBox extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _place(int i, double page, double w, double cardW, Widget card) {
+    final d = i - page;
+    final far = d.abs().clamp(0.0, 2.0);
+    return Positioned(
+      key: ValueKey(i),
+      left: w / 2 - cardW / 2 + d * w * _slot,
+      top: 22 + 16 * far,
+      child: Opacity(
+        opacity: (1 - (d.abs() - 1.6).clamp(0.0, 1.0)).toDouble(),
+        child: Transform.scale(
+          scale: 1 - 0.15 * far,
+          alignment: Alignment.topCenter,
+          child: card,
+        ),
+      ),
     );
   }
 }

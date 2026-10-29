@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import 'header_logo_v8.dart';
+import 'backdrops.dart';
 import 'theme_model.dart';
 
 /// The TDBO 2.0 retail home (Figma FVPs4KhiqJbNNbAsqIDBn6, «Retail» 74361:5083,
@@ -17,9 +17,13 @@ class TdboHomeView extends StatelessWidget {
     this.balanceHidden = false,
     this.onToggleBalance,
     this.preview = false,
+    this.backdrop = Backdrop.knot,
   });
 
   final Look look;
+
+  /// The header background.
+  final Backdrop backdrop;
   final VoidCallback? onAvatar;
   final bool balanceHidden;
   final VoidCallback? onToggleBalance;
@@ -48,21 +52,11 @@ class TdboHomeView extends StatelessWidget {
                         right: 0,
                         top: 0,
                         bottom: -28,
-                        child: look.isDark
-                            // Dark modes: the v8 logo thread from
-                            // ~/tdbo_retail_home, in the chosen colour on the
-                            // mode's background with a wash of that colour.
-                            ? HeaderLogoV8(
-                                underlap: 28,
-                                line: look.accent,
-                                ground: Color.alphaBlend(
-                                  look.brand.withValues(alpha: 0.12),
-                                  look.bg,
-                                ),
-                              )
-                            : CustomPaint(
-                                painter: _HeaderBg(look, streaks: !preview),
-                              ),
+                        child: HeaderBackdrop(
+                          backdrop: backdrop,
+                          look: look,
+                          underlap: 28,
+                        ),
                       ),
                       _Header(
                         look: look,
@@ -190,68 +184,6 @@ TextStyle _mr(
 // ---------------------------------------------------------------------------
 // Header (74361:5090)
 // ---------------------------------------------------------------------------
-
-/// Header ground: the chosen colour taken most of the way to near-black, with
-/// the TDBO diagonal light streaks on the right.
-class _HeaderBg extends CustomPainter {
-  _HeaderBg(this.look, {this.streaks = true});
-  final Look look;
-  final bool streaks;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final night = look.isDark
-        ? const Color(0xFF030507)
-        : const Color(0xFF00040C);
-    final depth = look.isDark ? 0.84 : 0.76;
-    final base = Color.lerp(look.brand, night, depth)!;
-    final lift = Color.lerp(look.brand, night, depth - 0.1)!;
-    final rect = Offset.zero & size;
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [lift, base, base, lift],
-          stops: const [0, 0.35, 0.7, 1],
-        ).createShader(rect),
-    );
-    if (!streaks) return;
-    final streak = Color.lerp(look.brand, Colors.white, 0.25)!;
-    canvas.save();
-    canvas.clipRect(rect);
-    final w = size.width, h = size.height;
-    for (final (x, width, alpha) in const [
-      (0.55, 0.10, 0.07),
-      (0.72, 0.05, 0.10),
-      (0.84, 0.14, 0.06),
-      (1.02, 0.04, 0.12),
-    ]) {
-      final path = Path()
-        ..moveTo(w * x, h)
-        ..lineTo(w * (x + width), h)
-        ..lineTo(w * (x + width + 0.45), 0)
-        ..lineTo(w * (x + 0.45), 0)
-        ..close();
-      canvas.drawPath(path, Paint()..color = streak.withValues(alpha: alpha));
-    }
-    for (final x in const [0.62, 0.9]) {
-      canvas.drawLine(
-        Offset(w * x, h),
-        Offset(w * (x + 0.45), 0),
-        Paint()
-          ..color = streak.withValues(alpha: 0.22)
-          ..strokeWidth = 1,
-      );
-    }
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(_HeaderBg old) =>
-      old.look != look || old.streaks != streaks;
-}
 
 class _Icon extends StatelessWidget {
   const _Icon(this.name, {required this.size, this.color});
@@ -795,8 +727,14 @@ class _NavBar extends StatelessWidget {
 /// [TdboHomeView] as a skeleton at the Figma frame size (425×912), scaled to
 /// [width].
 class TdboHomePreview extends StatelessWidget {
-  const TdboHomePreview({super.key, required this.look, required this.width});
+  const TdboHomePreview({
+    super.key,
+    required this.look,
+    required this.width,
+    this.backdrop = Backdrop.knot,
+  });
   final Look look;
+  final Backdrop backdrop;
   final double width;
 
   static const phone = Size(425, 912);
@@ -819,7 +757,11 @@ class TdboHomePreview extends StatelessWidget {
                 viewPadding: EdgeInsets.zero,
                 textScaler: TextScaler.noScaling,
               ),
-              child: TdboHomeView(look: look, preview: true),
+              child: TdboHomeView(
+                look: look,
+                preview: true,
+                backdrop: backdrop,
+              ),
             ),
           ),
         ),

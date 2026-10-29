@@ -26,21 +26,42 @@ enum Accent {
   final Color color;
 }
 
+/// Дэвсгэр — the dashboard header background, drawn from the chosen colour.
+/// The carousel shows them in this order, starting on [knot].
+enum Backdrop {
+  plain('Энгийн'),
+  lines('Шугам'),
+  knot('Зангилаа'),
+  mountains('Уул'),
+  pattern('Хээ');
+
+  const Backdrop(this.label);
+  final String label;
+}
+
 @immutable
 class ThemeSpec {
-  const ThemeSpec(this.mode, this.accent);
+  const ThemeSpec(this.mode, this.accent, [this.backdrop = Backdrop.knot]);
   final ModeChoice mode;
   final Accent accent;
+  final Backdrop backdrop;
 
-  ThemeSpec copyWith({ModeChoice? mode, Accent? accent}) =>
-      ThemeSpec(mode ?? this.mode, accent ?? this.accent);
+  ThemeSpec copyWith({ModeChoice? mode, Accent? accent, Backdrop? backdrop}) =>
+      ThemeSpec(
+        mode ?? this.mode,
+        accent ?? this.accent,
+        backdrop ?? this.backdrop,
+      );
 
   @override
   bool operator ==(Object other) =>
-      other is ThemeSpec && other.mode == mode && other.accent == accent;
+      other is ThemeSpec &&
+      other.mode == mode &&
+      other.accent == accent &&
+      other.backdrop == backdrop;
 
   @override
-  int get hashCode => Object.hash(mode, accent);
+  int get hashCode => Object.hash(mode, accent, backdrop);
 }
 
 /// Surface colours for one resolved look (light, black or navy-dark) plus the

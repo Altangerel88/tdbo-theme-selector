@@ -97,6 +97,15 @@ Path _parse(String d) {
 
 final List<Path> _paths = [for (final p in _pieces) _parse(p.d)];
 
+/// Draws the TDB mark alone (no square, no shadows) in [color], in the SVG's
+/// 512-unit space; scale the canvas first.
+void paintTdbMark(Canvas canvas, Color color) {
+  final paint = Paint()..color = color;
+  for (final path in _paths) {
+    canvas.drawPath(path, paint);
+  }
+}
+
 /// The logo's own blue.
 const _logoBlue = [Color(0xFF0086D6), Color(0xFF0093D9)];
 
