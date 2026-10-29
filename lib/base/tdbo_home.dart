@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'header_logo_v8.dart';
 import 'theme_model.dart';
 
 /// The TDBO 2.0 retail home (Figma FVPs4KhiqJbNNbAsqIDBn6, «Retail» 74361:5083,
@@ -47,9 +48,21 @@ class TdboHomeView extends StatelessWidget {
                         right: 0,
                         top: 0,
                         bottom: -28,
-                        child: CustomPaint(
-                          painter: _HeaderBg(look, streaks: !preview),
-                        ),
+                        child: look.isDark
+                            // Dark modes: the v8 logo thread from
+                            // ~/tdbo_retail_home, in the chosen colour on the
+                            // mode's background with a wash of that colour.
+                            ? HeaderLogoV8(
+                                underlap: 28,
+                                line: look.accent,
+                                ground: Color.alphaBlend(
+                                  look.brand.withValues(alpha: 0.12),
+                                  look.bg,
+                                ),
+                              )
+                            : CustomPaint(
+                                painter: _HeaderBg(look, streaks: !preview),
+                              ),
                       ),
                       _Header(
                         look: look,
