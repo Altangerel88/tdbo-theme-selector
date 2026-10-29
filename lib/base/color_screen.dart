@@ -80,21 +80,35 @@ class _ColorScreenState extends State<ColorScreen> {
                   tween: _LookTween(end: preview),
                   duration: const Duration(milliseconds: 280),
                   curve: Curves.easeOut,
-                  builder: (context, l, _) => Column(
-                    children: [
-                      // The TDB app icon as it would look on the home screen,
-                      // on the page above the preview.
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(0, 4, 0, 16),
-                        child: _AppIcon(look: l),
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: _PreviewBox(look: l),
-                        ),
-                      ),
-                    ],
+                  builder: (context, l, _) => LayoutBuilder(
+                    builder: (context, c) {
+                      // Icon block: 4 above, 60 icon, 16 below.
+                      const iconBlock = 80.0;
+                      // The card takes 85% of the height left after the icon,
+                      // with wide side margins; icon and card sit centred in
+                      // the space.
+                      final boxHeight = (c.maxHeight - iconBlock) * 0.85;
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // The TDB app icon as it would look on the home
+                          // screen, on the page above the preview.
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(0, 4, 0, 16),
+                            child: _AppIcon(look: l),
+                          ),
+                          SizedBox(
+                            height: boxHeight,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 36,
+                              ),
+                              child: _PreviewBox(look: l),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
