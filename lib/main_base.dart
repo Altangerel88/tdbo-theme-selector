@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'base/home.dart';
+import 'base/color_screen.dart';
 import 'base/theme_model.dart';
 
-// Base-style flow: `flutter run -t lib/main_base.dart`.
+// «Өнгө солих» page on its own: `flutter run -t lib/main_base.dart`.
 // `--dart-define=MODE=tsagaan|khar|system|baraan` and `ACCENT=green|blue|…`
 // set the starting theme (default: Цагаан + green, as on the current screen).
 const _mode = String.fromEnvironment('MODE', defaultValue: 'tsagaan');
@@ -60,7 +60,7 @@ class _BaseFlowAppState extends State<BaseFlowApp> {
           ModeChoice.system => ThemeMode.system,
         },
         themeAnimationDuration: const Duration(milliseconds: 350),
-        home: BaseHome(spec: _spec),
+        home: ColorScreen(spec: _spec),
       ),
     );
   }

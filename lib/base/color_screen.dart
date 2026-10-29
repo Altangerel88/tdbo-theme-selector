@@ -10,14 +10,6 @@ ModeChoice resolveMode(ModeChoice mode, Brightness platform) =>
     ? (platform == Brightness.dark ? ModeChoice.khar : ModeChoice.tsagaan)
     : mode;
 
-/// Opens «Өнгө солих» full screen. Choices apply as they are tapped.
-Future<void> openColorScreen(
-  BuildContext context,
-  ValueNotifier<ThemeSpec> spec,
-) => Navigator.of(
-  context,
-).push<void>(MaterialPageRoute(builder: (_) => ColorScreen(spec: spec)));
-
 /// Base's theme flow as a full screen: a skeleton TDBO home previews the
 /// choice above Горим and Өнгө. There is no save step — each tap applies the
 /// theme to the whole app at once.
@@ -66,7 +58,7 @@ class _ColorScreenState extends State<ColorScreen> {
                     Positioned(
                       left: 8,
                       child: IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () => Navigator.of(context).maybePop(),
                         tooltip: 'Буцах',
                         icon: Icon(Icons.arrow_back_rounded, color: look.ink),
                       ),
