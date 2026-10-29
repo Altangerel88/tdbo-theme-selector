@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'home_screen_preview.dart';
+import 'tdb_icon.dart';
 import 'tdbo_home.dart';
 import 'theme_model.dart';
 
@@ -25,23 +25,6 @@ class ColorScreen extends StatefulWidget {
 
 class _ColorScreenState extends State<ColorScreen> {
   ThemeSpec get _current => widget.spec.value;
-
-  // The preview box swipes between the app's dashboard and the phone's home
-  // screen with the TDB icon.
-  final _pages = PageController();
-  int _page = 0;
-
-  @override
-  void dispose() {
-    _pages.dispose();
-    super.dispose();
-  }
-
-  void _showPage(int i) => _pages.animateToPage(
-    i,
-    duration: const Duration(milliseconds: 320),
-    curve: Curves.easeOutCubic,
-  );
 
   void _set(ThemeSpec next) {
     if (next == _current) return;
@@ -99,17 +82,12 @@ class _ColorScreenState extends State<ColorScreen> {
                     tween: _LookTween(end: preview),
                     duration: const Duration(milliseconds: 280),
                     curve: Curves.easeOut,
-                    builder: (context, l, _) => _PreviewBox(
-                      look: l,
-                      pages: _pages,
-                      onPage: (i) => setState(() => _page = i),
-                    ),
+                    builder: (context, l, _) => _PreviewBox(look: l),
                   ),
                 ),
               ),
-              _PageDots(page: _page, look: look, onTap: _showPage),
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -171,141 +149,90 @@ class _ColorScreenState extends State<ColorScreen> {
 
 /// Base's tinted box with the phone peeking up from its bottom edge: the
 /// draft colour washed into the draft mode's background, and the real home.
+/// Base's tinted box: the TDB app icon as it would look on the home screen,
+/// and below it the phone peeking up from the bottom edge with the dashboard
+/// skeleton, both in the chosen Горим and Өнгө.
 class _PreviewBox extends StatelessWidget {
-  const _PreviewBox({
-    required this.look,
-    required this.pages,
-    required this.onPage,
-  });
+  const _PreviewBox({required this.look});
   final Look look;
-  final PageController pages;
-  final ValueChanged<int> onPage;
+
+  static const _iconSize = 56.0;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, c) {
-        const top = 22.0;
+        const iconTop = 20.0;
+        const top = iconTop + _iconSize + 18;
         // Show the phone from the status bar down to about the banner.
         const phone = TdboHomePreview.phone;
+        // Sized as before the icon was added (from a 22px top), so the phone
+        // keeps its size and simply runs further past the bottom edge.
         final byHeight =
-            (c.maxHeight - top) / (phone.height / phone.width * 0.66);
+            (c.maxHeight - 22) / (phone.height / phone.width * 0.66);
         final width = byHeight.clamp(120.0, c.maxWidth * 0.62);
         // The frame's 40px corners, scaled.
         final radius = 40 * width / phone.width;
-        final zoomed = c.maxWidth * 0.86;
+        final shadow = BoxShadow(
+          color: Colors.black.withValues(alpha: look.isDark ? 0.35 : 0.10),
+          blurRadius: 24,
+          offset: const Offset(0, 6),
+        );
 
         // The phone is taller than the box on purpose: it runs past the
         // bottom edge and is clipped there. A Positioned child gets unbounded
         // height, so the preview keeps its full size instead of shrinking to
         // fit (which left gaps beside it).
-        Widget framed(Widget screen, double radius) => Stack(
-          children: [
-            Positioned(
-              top: top,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(radius),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(
-                          alpha: look.isDark ? 0.35 : 0.10,
-                        ),
-                        blurRadius: 24,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(radius),
-                    ),
-                    child: screen,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-
         return Container(
           decoration: BoxDecoration(
             color: look.tint,
             borderRadius: BorderRadius.circular(24),
           ),
           clipBehavior: Clip.antiAlias,
-          child: PageView(
-            controller: pages,
-            onPageChanged: onPage,
+          child: Stack(
             children: [
-              framed(TdboHomePreview(look: look, width: width), radius),
-              // Zoomed in, so the TDB icon is big enough to read.
-              framed(
-                HomeScreenPreview(look: look, width: zoomed),
-                40 * zoomed / phone.width,
+              Positioned(
+                top: iconTop,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      // The icon's own corner: 120 of 512.
+                      borderRadius: BorderRadius.circular(
+                        _iconSize * 120 / 512,
+                      ),
+                      boxShadow: [shadow],
+                    ),
+                    child: TdbAppIcon(look: look, size: _iconSize),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: top,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(radius),
+                      ),
+                      boxShadow: [shadow],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(radius),
+                      ),
+                      child: TdboHomePreview(look: look, width: width),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
         );
       },
-    );
-  }
-}
-
-/// Two dots under the preview: dashboard, home screen. Tap to switch.
-class _PageDots extends StatelessWidget {
-  const _PageDots({
-    required this.page,
-    required this.look,
-    required this.onTap,
-  });
-  final int page;
-  final Look look;
-  final ValueChanged<int> onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final active = readable(look.accent, look.bg, ratio: 3);
-    return SizedBox(
-      height: 28,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          for (final (i, label) in const [(0, 'Апп'), (1, 'Нүүр дэлгэц')])
-            Semantics(
-              button: true,
-              selected: i == page,
-              label: label,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => onTap(i),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 3,
-                    vertical: 11,
-                  ),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOut,
-                    width: i == page ? 16 : 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: i == page
-                          ? active
-                          : look.ink.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
     );
   }
 }
