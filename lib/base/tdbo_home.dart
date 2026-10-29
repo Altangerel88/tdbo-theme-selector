@@ -17,13 +17,13 @@ class TdboHomeView extends StatelessWidget {
     this.balanceHidden = false,
     this.onToggleBalance,
     this.preview = false,
-    this.backdrop = Backdrop.knot,
+    this.accent = Accent.blue,
   });
 
   final Look look;
 
-  /// The header background.
-  final Backdrop backdrop;
+  /// Whose header photo to show.
+  final Accent accent;
   final VoidCallback? onAvatar;
   final bool balanceHidden;
   final VoidCallback? onToggleBalance;
@@ -52,11 +52,7 @@ class TdboHomeView extends StatelessWidget {
                         right: 0,
                         top: 0,
                         bottom: -28,
-                        child: HeaderBackdrop(
-                          backdrop: backdrop,
-                          look: look,
-                          underlap: 28,
-                        ),
+                        child: HeaderPhoto(accent: accent, look: look),
                       ),
                       _Header(
                         look: look,
@@ -731,10 +727,10 @@ class TdboHomePreview extends StatelessWidget {
     super.key,
     required this.look,
     required this.width,
-    this.backdrop = Backdrop.knot,
+    this.accent = Accent.blue,
   });
   final Look look;
-  final Backdrop backdrop;
+  final Accent accent;
   final double width;
 
   static const phone = Size(425, 912);
@@ -757,11 +753,7 @@ class TdboHomePreview extends StatelessWidget {
                 viewPadding: EdgeInsets.zero,
                 textScaler: TextScaler.noScaling,
               ),
-              child: TdboHomeView(
-                look: look,
-                preview: true,
-                backdrop: backdrop,
-              ),
+              child: TdboHomeView(look: look, preview: true, accent: accent),
             ),
           ),
         ),

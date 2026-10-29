@@ -20,6 +20,7 @@ flutter:
   assets:
     - assets/icons/
     - assets/images/
+    - assets/backgrounds/
   fonts:
     - family: Manrope
       fonts:

@@ -26,6 +26,15 @@ class ColorScreen extends StatefulWidget {
 class _ColorScreenState extends State<ColorScreen> {
   ThemeSpec get _current => widget.spec.value;
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Decode every header photo up front, so switching colour never flashes.
+    for (final a in Accent.values) {
+      precacheImage(AssetImage(a.photo), context);
+    }
+  }
+
   void _set(ThemeSpec next) {
     if (next == _current) return;
     HapticFeedback.selectionClick();
@@ -103,13 +112,11 @@ class _ColorScreenState extends State<ColorScreen> {
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 36,
                               ),
-                              // Each colour's own background in light
-                              // mode; the v8 logo thread in dark modes.
+                              // Each colour's own header photo, in every
+                              // Горим.
                               child: _PreviewBox(
                                 look: l,
-                                backdrop: l.isDark
-                                    ? Backdrop.knot
-                                    : _current.accent.backdrop,
+                                accent: _current.accent,
                               ),
                             ),
                           ),
@@ -207,9 +214,9 @@ class _AppIcon extends StatelessWidget {
 /// Base's tinted box with the phone peeking up from its bottom edge: the
 /// dashboard skeleton in the chosen Горим and Өнгө.
 class _PreviewBox extends StatelessWidget {
-  const _PreviewBox({required this.look, required this.backdrop});
+  const _PreviewBox({required this.look, required this.accent});
   final Look look;
-  final Backdrop backdrop;
+  final Accent accent;
 
   @override
   Widget build(BuildContext context) {
@@ -262,7 +269,7 @@ class _PreviewBox extends StatelessWidget {
                       child: TdboHomePreview(
                         look: look,
                         width: width,
-                        backdrop: backdrop,
+                        accent: accent,
                       ),
                     ),
                   ),

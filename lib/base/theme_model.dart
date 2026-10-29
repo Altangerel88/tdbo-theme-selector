@@ -12,34 +12,27 @@ enum ModeChoice {
 }
 
 /// Өнгө — the eight colours on the current screen, sampled from it. Each
-/// has its own dashboard background in light mode.
+/// has its own dashboard header photo (assets/backgrounds, CREDITS.md).
 enum Accent {
-  blue(Color(0xFF0054A6), Backdrop.lines),
-  pink(Color(0xFFD81B60), Backdrop.bokeh),
-  navy(Color(0xFF102751), Backdrop.mountains),
-  purple(Color(0xFF6A1B9A), Backdrop.nebula),
-  green(Color(0xFF0E6447), Backdrop.aurora),
-  tan(Color(0xFFA68A64), Backdrop.dunes),
-  orange(Color(0xFFE65100), Backdrop.sunset),
-  olive(Color(0xFF6B8E23), Backdrop.pattern);
+  blue(Color(0xFF0054A6), Alignment(0, 0.35), 0.04), // Lake Khövsgöl
+  pink(Color(0xFFD81B60), Alignment(0, 0.4)), // pink sky over peaks
+  navy(Color(0xFF102751), Alignment.center), // Milky Way over dunes
+  purple(Color(0xFF6A1B9A), Alignment.center), // Westerlund 2 (Hubble)
+  green(Color(0xFF0E6447), Alignment(0, -0.2)), // aurora over a lake
+  tan(Color(0xFFA68A64), Alignment.center, 0.24), // Khongoryn Els, Gobi
+  orange(Color(0xFFE65100), Alignment(0, 0.35)), // Gobi sunset
+  olive(Color(0xFF6B8E23), Alignment(0, 0.2), 0.12); // Orkhon Valley
 
-  const Accent(this.color, this.backdrop);
+  const Accent(this.color, this.photoAlignment, [this.photoDim = 0]);
   final Color color;
-  final Backdrop backdrop;
-}
 
-/// The dashboard header background. Light mode uses the colour's own
-/// ([Accent.backdrop]); dark modes use [knot], the v8 logo thread.
-enum Backdrop {
-  lines, // Шугам: the TDBO diagonal streaks
-  bokeh, // soft blurred lights
-  mountains, // night mountains, moon and stars
-  nebula, // a starry nebula
-  aurora, // northern lights
-  dunes, // Gobi dunes at dusk
-  sunset, // sun setting over the steppe
-  pattern, // Хээ: tiled TDB marks
-  knot, // Зангилаа: the v8 logo thread
+  /// Which part of the photo the header's cover crop keeps.
+  final Alignment photoAlignment;
+
+  /// Extra darkening for bright daylight photos, so white text still reads.
+  final double photoDim;
+
+  String get photo => 'assets/backgrounds/$name.jpg';
 }
 
 @immutable
