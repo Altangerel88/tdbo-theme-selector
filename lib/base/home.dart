@@ -38,10 +38,10 @@ class _BaseHomeState extends State<BaseHome> {
   }
 
   Future<void> _openColors(BuildContext context) async {
-    final next = await openColorScreen(context, widget.spec.value);
-    if (next == null || next == widget.spec.value || !mounted) return;
-    widget.spec.value = next;
-    if (context.mounted) _showToast(context);
+    final before = widget.spec.value;
+    await openColorScreen(context, widget.spec);
+    // Choices applied live; confirm on the way back if anything changed.
+    if (widget.spec.value != before && context.mounted) _showToast(context);
   }
 
   @override

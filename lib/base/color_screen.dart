@@ -10,48 +10,43 @@ ModeChoice resolveMode(ModeChoice mode, Brightness platform) =>
     ? (platform == Brightness.dark ? ModeChoice.khar : ModeChoice.tsagaan)
     : mode;
 
-/// Opens «Өнгө солих» full screen; completes with the saved [ThemeSpec], or
-/// null on back.
-Future<ThemeSpec?> openColorScreen(BuildContext context, ThemeSpec current) =>
-    Navigator.of(context).push<ThemeSpec>(
-      MaterialPageRoute(builder: (_) => ColorScreen(initial: current)),
-    );
+/// Opens «Өнгө солих» full screen. Choices apply as they are tapped.
+Future<void> openColorScreen(
+  BuildContext context,
+  ValueNotifier<ThemeSpec> spec,
+) => Navigator.of(
+  context,
+).push<void>(MaterialPageRoute(builder: (_) => ColorScreen(spec: spec)));
 
-/// Base's theme flow as a full screen: the real TDBO home previews the draft
-/// above Горим and Өнгө, and the Хадгалах button wears the draft colour.
-/// Nothing applies until Хадгалах.
+/// Base's theme flow as a full screen: a skeleton TDBO home previews the
+/// choice above Горим and Өнгө. There is no save step — each tap applies the
+/// theme to the whole app at once.
 class ColorScreen extends StatefulWidget {
-  const ColorScreen({super.key, required this.initial});
+  const ColorScreen({super.key, required this.spec});
 
-  final ThemeSpec initial;
+  final ValueNotifier<ThemeSpec> spec;
 
   @override
   State<ColorScreen> createState() => _ColorScreenState();
 }
 
 class _ColorScreenState extends State<ColorScreen> {
-  late ThemeSpec _draft = widget.initial;
+  ThemeSpec get _current => widget.spec.value;
 
   void _set(ThemeSpec next) {
-    if (next == _draft) return;
+    if (next == _current) return;
     HapticFeedback.selectionClick();
-    setState(() => _draft = next);
+    setState(() => widget.spec.value = next);
   }
 
   @override
   Widget build(BuildContext context) {
     final look = Look.read(context);
     final platform = MediaQuery.platformBrightnessOf(context);
-    // The screen keeps the app's current surface; only the accent follows
-    // the draft, tuned for that surface.
-    final screenMode = look.isDark
-        ? (resolveMode(widget.initial.mode, platform) == ModeChoice.baraan
-              ? ModeChoice.baraan
-              : ModeChoice.khar)
-        : ModeChoice.tsagaan;
-    final accent = Look.of(screenMode, _draft.accent);
-    final preview = Look.of(resolveMode(_draft.mode, platform), _draft.accent);
-    final changed = _draft != widget.initial;
+    final preview = Look.of(
+      resolveMode(_current.mode, platform),
+      _current.accent,
+    );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: look.isDark
@@ -111,10 +106,10 @@ class _ColorScreenState extends State<ColorScreen> {
                         for (final m in ModeChoice.values)
                           _ModeTile(
                             mode: m,
-                            selected: m == _draft.mode,
-                            ring: accent.accent,
+                            selected: m == _current.mode,
+                            ring: look.accent,
                             look: look,
-                            onTap: () => _set(_draft.copyWith(mode: m)),
+                            onTap: () => _set(_current.copyWith(mode: m)),
                           ),
                       ],
                     ),
@@ -137,21 +132,17 @@ class _ColorScreenState extends State<ColorScreen> {
                                 _Swatch(
                                   color: a.color,
                                   size: d,
-                                  selected: a == _draft.accent,
-                                  ring: accent.accent,
-                                  onTap: () => _set(_draft.copyWith(accent: a)),
+                                  selected: a == _current.accent,
+                                  ring: look.accent,
+                                  onTap: () =>
+                                      _set(_current.copyWith(accent: a)),
                                 ),
                             ],
                           );
                         },
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    _SaveButton(
-                      look: accent,
-                      enabled: changed,
-                      onPressed: () => Navigator.of(context).pop(_draft),
-                    ),
+                    const SizedBox(height: 12),
                   ],
                 ),
               ),
@@ -408,48 +399,5 @@ class _Ring extends StatelessWidget {
       ),
     ),
     child: child,
-  );
-}
-
-class _SaveButton extends StatelessWidget {
-  const _SaveButton({
-    required this.look,
-    required this.enabled,
-    required this.onPressed,
-  });
-
-  final Look look;
-  final bool enabled;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    enabled: enabled,
-    child: GestureDetector(
-      onTap: enabled ? onPressed : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        height: 52,
-        width: double.infinity,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: look.accent,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 220),
-          opacity: enabled ? 1 : 0.5,
-          child: Text(
-            'Хадгалах',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: look.onAccent,
-            ),
-          ),
-        ),
-      ),
-    ),
   );
 }
