@@ -182,39 +182,51 @@ class _PreviewBox extends StatelessWidget {
         final byHeight =
             (c.maxHeight - top) / (phone.height / phone.width * 0.66);
         final width = byHeight.clamp(120.0, c.maxWidth * 0.62);
-        final radius = 44 * width / TdboHomePreview.phone.width;
+        // The frame's 40px corners, scaled.
+        final radius = 40 * width / phone.width;
 
+        // The phone is taller than the box on purpose: it runs past the
+        // bottom edge and is clipped there. A Positioned child gets unbounded
+        // height, so the preview keeps its full size instead of shrinking to
+        // fit (which left gaps beside it).
         return Container(
           decoration: BoxDecoration(
             color: look.tint,
             borderRadius: BorderRadius.circular(24),
           ),
           clipBehavior: Clip.antiAlias,
-          alignment: Alignment.topCenter,
-          padding: const EdgeInsets.only(top: top),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(radius)),
-              border: Border.all(
-                color: look.isDark ? look.divider : Colors.white,
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(
-                    alpha: look.isDark ? 0.35 : 0.10,
+          child: Stack(
+            children: [
+              Positioned(
+                top: top,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(radius),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: look.isDark ? 0.35 : 0.10,
+                          ),
+                          blurRadius: 24,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(radius),
+                      ),
+                      child: TdboHomePreview(look: look, width: width),
+                    ),
                   ),
-                  blurRadius: 24,
-                  offset: const Offset(0, 6),
                 ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(radius - 2),
               ),
-              child: TdboHomePreview(look: look, width: width - 4),
-            ),
+            ],
           ),
         );
       },
