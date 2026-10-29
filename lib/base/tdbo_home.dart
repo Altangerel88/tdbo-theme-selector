@@ -109,7 +109,13 @@ class _Skeleton extends InheritedWidget {
 /// would be and centred in its line box. [bar] overrides the colour, which
 /// otherwise is the text colour faded (16% for dark text, 45% for light).
 class _Txt extends StatelessWidget {
-  const _Txt(this.text, this.style, {this.bar, this.clamp = false});
+  const _Txt(
+    this.text,
+    this.style, {
+    this.bar,
+    this.clamp = false,
+    this.drop = false,
+  });
 
   final String text;
   final TextStyle style;
@@ -117,6 +123,9 @@ class _Txt extends StatelessWidget {
 
   /// Single line, ellipsised: the bar never exceeds the available width.
   final bool clamp;
+
+  /// Left out of the skeleton altogether, to keep the preview sparse.
+  final bool drop;
 
   @override
   Widget build(BuildContext context) {
@@ -129,6 +138,7 @@ class _Txt extends StatelessWidget {
         overflow: clamp ? TextOverflow.ellipsis : null,
       );
     }
+    if (drop) return const SizedBox.shrink();
     final painter = TextPainter(
       text: TextSpan(text: text, style: style),
       textDirection: TextDirection.ltr,
@@ -303,8 +313,12 @@ class _Header extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _Txt('Өдрийн мэнд!', _mr(13, FontWeight.w500, white72)),
-                    const SizedBox(height: 2),
+                    _Txt(
+                      'Өдрийн мэнд!',
+                      _mr(13, FontWeight.w500, white72),
+                      drop: true,
+                    ),
+                    if (!skeleton) const SizedBox(height: 2),
                     _Txt(
                       'Алтангэрэл',
                       _mr(18, FontWeight.w800, Colors.white),
@@ -329,21 +343,23 @@ class _Header extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _Txt(
-                  'MN91 0004 0040 0238 9817',
-                  _mr(13, FontWeight.w500, white72),
-                ),
-                const SizedBox(width: 8),
-                const _Icon('copy', size: 16),
-              ],
+          if (!skeleton) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _Txt(
+                    'MN91 0004 0040 0238 9817',
+                    _mr(13, FontWeight.w500, white72),
+                  ),
+                  const SizedBox(width: 8),
+                  const _Icon('copy', size: 16),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 3),
+            const SizedBox(height: 3),
+          ],
           Row(
             crossAxisAlignment: skeleton
                 ? CrossAxisAlignment.center
@@ -359,6 +375,7 @@ class _Header extends StatelessWidget {
               _Txt(
                 'MNT',
                 _mr(16, FontWeight.w700, Colors.white.withValues(alpha: 0.7)),
+                drop: true,
               ),
             ],
           ),
@@ -369,13 +386,15 @@ class _Header extends StatelessWidget {
                 'Дансны хуулга',
                 fill: Colors.white,
                 text: pillText,
-                bar: pillText,
+                // Empty in the skeleton: the pill's shape is enough.
+                bar: skeleton ? Colors.transparent : pillText,
               ),
               const SizedBox(width: 10),
               _Pill(
                 'Данс хайх',
                 fill: Colors.white.withValues(alpha: 0.10),
                 text: Colors.white.withValues(alpha: 0.95),
+                bar: skeleton ? Colors.transparent : null,
               ),
             ],
           ),
@@ -495,7 +514,11 @@ class _Content extends StatelessWidget {
                         // Figma's 12 gap is to the cap line; Manrope's ascent sits
                         // ~5px above the caps inside the line box.
                         const SizedBox(height: 7),
-                        _Txt(label, _mr(14, FontWeight.w600, look.ink)),
+                        _Txt(
+                          label,
+                          _mr(14, FontWeight.w600, look.ink),
+                          drop: true,
+                        ),
                       ],
                     ),
                   ),
@@ -545,24 +568,25 @@ class _Content extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  _Txt(
-                    'Сүүлийн гүйлгээ',
-                    _mr(14, FontWeight.w500, look.muted, height: lh),
-                  ),
-                  const Spacer(),
-                  _Txt(
-                    'Хуулга',
-                    _mr(14, FontWeight.w700, link, height: lh),
-                    bar: link,
-                  ),
-                  _Icon('caret_right', size: 16, color: link),
-                ],
+            if (!skeleton)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    _Txt(
+                      'Сүүлийн гүйлгээ',
+                      _mr(14, FontWeight.w500, look.muted, height: lh),
+                    ),
+                    const Spacer(),
+                    _Txt(
+                      'Хуулга',
+                      _mr(14, FontWeight.w700, link, height: lh),
+                      bar: link,
+                    ),
+                    _Icon('caret_right', size: 16, color: link),
+                  ],
+                ),
               ),
-            ),
             for (final incoming in const [true, false, true, false])
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -646,12 +670,14 @@ class _Content extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4),
-                          _Txt(
-                            'POS Normal Purchase Ner/HaanaPOS Normal Purchase Ner/Haana',
-                            _mr(14, FontWeight.w500, look.ink, height: lh),
-                            clamp: true,
-                          ),
+                          if (!skeleton) ...[
+                            const SizedBox(height: 4),
+                            _Txt(
+                              'POS Normal Purchase Ner/HaanaPOS Normal Purchase Ner/Haana',
+                              _mr(14, FontWeight.w500, look.ink, height: lh),
+                              clamp: true,
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -743,7 +769,7 @@ class _NavBar extends StatelessWidget {
                       )
                     else
                       _Icon(items[i].$1, size: 24, color: look.ink),
-                    const SizedBox(height: 6),
+                    if (!_Skeleton.of(context)) const SizedBox(height: 6),
                     _Txt(
                       items[i].$2,
                       _mr(
@@ -754,6 +780,7 @@ class _NavBar extends StatelessWidget {
                         height: 1.074,
                       ),
                       bar: i == 0 ? active : null,
+                      drop: true,
                     ),
                   ],
                 ),
