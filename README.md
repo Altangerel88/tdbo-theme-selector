@@ -1,17 +1,30 @@
-# tdbo_theme_selector
+# TDBO theme selector
 
-A new Flutter project.
+Flutter prototype of the TDB Online «Өнгө солих» (change colour) page, in the
+style of Base's theme picker.
 
-## Getting Started
+- **Горим** (mode): Цагаан, Хар, Систем, Бараан
+- **Өнгө** (colour): the eight current TDBO accent colours
+- A skeleton preview of the TDBO home (Figma «Retail», node 74361:5083) shows
+  the choice; every tap applies the theme to the app at once.
 
-This project is a starting point for a Flutter application.
+## Run
 
-A few resources to get you started if this is your first Flutter project:
+```sh
+flutter pub get
+flutter run -t lib/main_base.dart        # Өнгө солих page
+flutter run                              # earlier Revolut-style carousel (v1)
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Starting theme: `--dart-define=MODE=tsagaan|khar|system|baraan` and
+`--dart-define=ACCENT=blue|pink|navy|purple|green|tan|orange|olive`.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Layout
+
+- `lib/base/color_screen.dart` — the page: preview box, Горим, Өнгө
+- `lib/base/tdbo_home.dart` — TDBO home layout, drawn as a skeleton for the preview
+- `lib/base/theme_model.dart` — modes, colours and the resolved `Look`
+- `lib/main.dart`, `lib/theme_sheet.dart`, `lib/preview_card.dart`,
+  `lib/tokens.dart` — the v1 Revolut-style selector
+
+Git tags: `v1-theme-selector`, `v2-base-flow`, `v3-skeleton-preview`.
