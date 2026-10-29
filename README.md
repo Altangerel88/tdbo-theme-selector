@@ -7,9 +7,9 @@ style of Base's theme picker.
 - **Өнгө** (colour): the eight current TDBO accent colours
 - A skeleton preview of the TDBO home (Figma «Retail», node 74361:5083) shows
   the choice; every tap applies the theme to the app at once.
-- **Дэвсгэр** (background): a fan of preview cards with five header
-  backgrounds drawn from the chosen colour — Энгийн, Шугам, Зангилаа (the v8
-  logo thread from `tdbo_retail_home`), Уул, Хээ.
+- Each Өнгө has its own dashboard background in light mode (blue streaks, pink
+  lights, navy mountains, purple nebula, green aurora, tan dunes, orange sunset,
+  olive TDB pattern); dark modes use the v8 logo thread from `tdbo_retail_home`.
 
 ## Run
 
@@ -27,7 +27,7 @@ Starting theme: `--dart-define=MODE=tsagaan|khar|system|baraan` and
 - `lib/base/color_screen.dart` — the page: preview box, Горим, Өнгө
 - `lib/base/tdbo_home.dart` — TDBO home layout, drawn as a skeleton for the preview
 - `lib/base/theme_model.dart` — modes, colours and the resolved `Look`
-- `lib/base/backdrops.dart` — the five header backgrounds
+- `lib/base/backdrops.dart` — the header backgrounds, one per colour
 - `lib/base/header_logo_v8.dart` — the v8 logo thread, recolourable
 - `lib/base/tdb_icon.dart` — the TDB app icon, drawn from `tdb-logo.svg`
 - `lib/main.dart`, `lib/theme_sheet.dart`, `lib/preview_card.dart`,

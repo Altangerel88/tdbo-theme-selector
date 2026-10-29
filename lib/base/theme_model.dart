@@ -11,57 +11,52 @@ enum ModeChoice {
   final String label;
 }
 
-/// Өнгө — the eight colours on the current screen, sampled from it.
+/// Өнгө — the eight colours on the current screen, sampled from it. Each
+/// has its own dashboard background in light mode.
 enum Accent {
-  blue(Color(0xFF0054A6)),
-  pink(Color(0xFFD81B60)),
-  navy(Color(0xFF102751)),
-  purple(Color(0xFF6A1B9A)),
-  green(Color(0xFF0E6447)),
-  tan(Color(0xFFA68A64)),
-  orange(Color(0xFFE65100)),
-  olive(Color(0xFF6B8E23));
+  blue(Color(0xFF0054A6), Backdrop.lines),
+  pink(Color(0xFFD81B60), Backdrop.bokeh),
+  navy(Color(0xFF102751), Backdrop.mountains),
+  purple(Color(0xFF6A1B9A), Backdrop.nebula),
+  green(Color(0xFF0E6447), Backdrop.aurora),
+  tan(Color(0xFFA68A64), Backdrop.dunes),
+  orange(Color(0xFFE65100), Backdrop.sunset),
+  olive(Color(0xFF6B8E23), Backdrop.pattern);
 
-  const Accent(this.color);
+  const Accent(this.color, this.backdrop);
   final Color color;
+  final Backdrop backdrop;
 }
 
-/// Дэвсгэр — the dashboard header background, drawn from the chosen colour.
-/// The carousel shows them in this order, starting on [knot].
+/// The dashboard header background. Light mode uses the colour's own
+/// ([Accent.backdrop]); dark modes use [knot], the v8 logo thread.
 enum Backdrop {
-  plain('Энгийн'),
-  lines('Шугам'),
-  knot('Зангилаа'),
-  mountains('Уул'),
-  pattern('Хээ');
-
-  const Backdrop(this.label);
-  final String label;
+  lines, // Шугам: the TDBO diagonal streaks
+  bokeh, // soft blurred lights
+  mountains, // night mountains, moon and stars
+  nebula, // a starry nebula
+  aurora, // northern lights
+  dunes, // Gobi dunes at dusk
+  sunset, // sun setting over the steppe
+  pattern, // Хээ: tiled TDB marks
+  knot, // Зангилаа: the v8 logo thread
 }
 
 @immutable
 class ThemeSpec {
-  const ThemeSpec(this.mode, this.accent, [this.backdrop = Backdrop.knot]);
+  const ThemeSpec(this.mode, this.accent);
   final ModeChoice mode;
   final Accent accent;
-  final Backdrop backdrop;
 
-  ThemeSpec copyWith({ModeChoice? mode, Accent? accent, Backdrop? backdrop}) =>
-      ThemeSpec(
-        mode ?? this.mode,
-        accent ?? this.accent,
-        backdrop ?? this.backdrop,
-      );
+  ThemeSpec copyWith({ModeChoice? mode, Accent? accent}) =>
+      ThemeSpec(mode ?? this.mode, accent ?? this.accent);
 
   @override
   bool operator ==(Object other) =>
-      other is ThemeSpec &&
-      other.mode == mode &&
-      other.accent == accent &&
-      other.backdrop == backdrop;
+      other is ThemeSpec && other.mode == mode && other.accent == accent;
 
   @override
-  int get hashCode => Object.hash(mode, accent, backdrop);
+  int get hashCode => Object.hash(mode, accent);
 }
 
 /// Surface colours for one resolved look (light, black or navy-dark) plus the
