@@ -111,9 +111,6 @@ class _ColorScreenState extends State<ColorScreen> {
                         for (final m in ModeChoice.values)
                           _ModeTile(
                             mode: m,
-                            dot: m == ModeChoice.baraan
-                                ? const Color(0xFF4A90FF)
-                                : _draft.accent.color,
                             selected: m == _draft.mode,
                             ring: accent.accent,
                             look: look,
@@ -262,7 +259,6 @@ class _LookTween extends Tween<Look> {
 class _ModeTile extends StatelessWidget {
   const _ModeTile({
     required this.mode,
-    required this.dot,
     required this.selected,
     required this.ring,
     required this.look,
@@ -270,19 +266,44 @@ class _ModeTile extends StatelessWidget {
   });
 
   final ModeChoice mode;
-  final Color dot;
   final bool selected;
   final Color ring;
   final Look look;
   final VoidCallback onTap;
 
+  // Revolut's swatches: soft top-left to bottom-right gradients.
+  static const _light = [Color(0xFFF0F0F0), Color(0xFFDADADA)];
+  static const _black = [Color(0xFF4A4A4A), Color(0xFF1E1E1E)];
+  static const _navy = [Color(0xFF2A3A5E), Color(0xFF0B1222)];
+
+  static Widget _disc(List<Color> colors, {Color? rim}) => DecoratedBox(
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: colors,
+      ),
+      border: rim == null ? null : Border.all(color: rim),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
-    final (fill, border) = switch (mode) {
-      ModeChoice.tsagaan => (const Color(0xFFF5F9F8), const Color(0xFFDDE6E3)),
-      ModeChoice.khar => (const Color(0xFF121212), const Color(0xFF121212)),
-      ModeChoice.system => (const Color(0xFFEFF5F3), const Color(0xFFDDE6E3)),
-      ModeChoice.baraan => (const Color(0xFF0B0D12), const Color(0xFF0B0D12)),
+    // Light discs get a hairline so they hold their edge on a light page.
+    final lightRim = look.isDark ? null : const Color(0xFFD4D4D4);
+    final fill = switch (mode) {
+      ModeChoice.tsagaan => _disc(_light, rim: lightRim),
+      ModeChoice.khar => _disc(_black),
+      ModeChoice.baraan => _disc(_navy),
+      ModeChoice.system => ClipOval(
+        child: Row(
+          children: [
+            Expanded(child: _halfFill(_black)),
+            Expanded(child: _halfFill(_light)),
+          ],
+        ),
+      ),
     };
     return Semantics(
       button: true,
@@ -296,39 +317,13 @@ class _ModeTile extends StatelessWidget {
           width: 68,
           child: Column(
             children: [
-              _Ring(
-                selected: selected,
-                color: ring,
-                size: 52,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: fill,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: look.isDark && border == fill
-                          ? look.divider
-                          : border,
-                    ),
-                  ),
-                  child: Center(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 14,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: dot,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 6),
+              _Ring(selected: selected, color: ring, size: 52, child: fill),
+              const SizedBox(height: 8),
               Text(
                 mode.label,
                 style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  fontSize: 13,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                   color: selected ? look.ink : look.muted,
                 ),
               ),
@@ -338,6 +333,17 @@ class _ModeTile extends StatelessWidget {
       ),
     );
   }
+
+  static Widget _halfFill(List<Color> colors) => DecoratedBox(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: colors,
+      ),
+    ),
+    child: const SizedBox.expand(),
+  );
 }
 
 class _Swatch extends StatelessWidget {
