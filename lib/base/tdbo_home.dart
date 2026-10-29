@@ -47,7 +47,9 @@ class TdboHomeView extends StatelessWidget {
                         right: 0,
                         top: 0,
                         bottom: -28,
-                        child: CustomPaint(painter: _HeaderBg(look)),
+                        child: CustomPaint(
+                          painter: _HeaderBg(look, streaks: !preview),
+                        ),
                       ),
                       _Header(
                         look: look,
@@ -62,8 +64,6 @@ class TdboHomeView extends StatelessWidget {
                 ],
               ),
             ),
-            if (preview)
-              const Positioned(left: 0, right: 0, top: 0, child: _StatusBar()),
             Positioned(
               left: 0,
               right: 0,
@@ -171,8 +171,9 @@ TextStyle _mr(
 /// Header ground: the chosen colour taken most of the way to near-black, with
 /// the TDBO diagonal light streaks on the right.
 class _HeaderBg extends CustomPainter {
-  _HeaderBg(this.look);
+  _HeaderBg(this.look, {this.streaks = true});
   final Look look;
+  final bool streaks;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -193,6 +194,7 @@ class _HeaderBg extends CustomPainter {
           stops: const [0, 0.35, 0.7, 1],
         ).createShader(rect),
     );
+    if (!streaks) return;
     final streak = Color.lerp(look.brand, Colors.white, 0.25)!;
     canvas.save();
     canvas.clipRect(rect);
@@ -224,53 +226,8 @@ class _HeaderBg extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_HeaderBg old) => old.look != look;
-}
-
-/// Figma «Status Bars» (74361:5257): 9:41 in Manrope Bold 15 and the system
-/// glyphs, for the preview only.
-class _StatusBar extends StatelessWidget {
-  const _StatusBar();
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 44,
-    child: Padding(
-      padding: const EdgeInsets.fromLTRB(21, 7, 14, 0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 54,
-            height: 21,
-            child: Center(
-              child: Text(
-                '9:41',
-                style: _mr(15, FontWeight.w700, Colors.white, ls: -0.24),
-              ),
-            ),
-          ),
-          const Spacer(),
-          const Padding(
-            padding: EdgeInsets.only(top: 6),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.signal_cellular_alt_rounded,
-                  size: 17,
-                  color: Colors.white,
-                ),
-                SizedBox(width: 4),
-                Icon(Icons.wifi_rounded, size: 17, color: Colors.white),
-                SizedBox(width: 4),
-                Icon(Icons.battery_full_rounded, size: 19, color: Colors.white),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
+  bool shouldRepaint(_HeaderBg old) =>
+      old.look != look || old.streaks != streaks;
 }
 
 class _Icon extends StatelessWidget {
@@ -280,14 +237,16 @@ class _Icon extends StatelessWidget {
   final Color? color;
 
   @override
-  Widget build(BuildContext context) => SvgPicture.asset(
-    'assets/icons/$name.svg',
-    width: size,
-    height: size,
-    colorFilter: color == null
-        ? null
-        : ColorFilter.mode(color!, BlendMode.srcIn),
-  );
+  Widget build(BuildContext context) => _Skeleton.of(context)
+      ? const SizedBox.shrink()
+      : SvgPicture.asset(
+          'assets/icons/$name.svg',
+          width: size,
+          height: size,
+          colorFilter: color == null
+              ? null
+              : ColorFilter.mode(color!, BlendMode.srcIn),
+        );
 }
 
 class _Header extends StatelessWidget {
@@ -544,33 +503,30 @@ class _Content extends StatelessWidget {
                         'assets/images/banner_huurimtlaltai.png',
                         fit: BoxFit.cover,
                       ),
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      top: 204,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          for (var i = 0; i < 4; i++) ...[
-                            if (i > 0) const SizedBox(width: 6),
-                            Container(
-                              width: i == 0 ? 16 : 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                color: skeleton
-                                    ? (i == 0
-                                          ? link
-                                          : look.ink.withValues(alpha: 0.12))
-                                    : Colors.white.withValues(
-                                        alpha: i == 0 ? 1 : 0.25,
-                                      ),
-                                borderRadius: BorderRadius.circular(3),
+                    if (!skeleton)
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        top: 204,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            for (var i = 0; i < 4; i++) ...[
+                              if (i > 0) const SizedBox(width: 6),
+                              Container(
+                                width: i == 0 ? 16 : 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(
+                                    alpha: i == 0 ? 1 : 0.25,
+                                  ),
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
                               ),
-                            ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -759,6 +715,17 @@ class _NavBar extends StatelessWidget {
                           items[i].$1,
                           size: 18,
                           color: look.onAccent,
+                        ),
+                      )
+                    else if (_Skeleton.of(context))
+                      // A plain dot where the icon would be.
+                      Container(
+                        width: 20,
+                        height: 20,
+                        margin: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: look.ink.withValues(alpha: 0.10),
+                          shape: BoxShape.circle,
                         ),
                       )
                     else
