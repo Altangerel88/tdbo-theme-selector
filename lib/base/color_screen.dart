@@ -76,13 +76,25 @@ class _ColorScreenState extends State<ColorScreen> {
                 ),
               ),
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-                  child: TweenAnimationBuilder<Look>(
-                    tween: _LookTween(end: preview),
-                    duration: const Duration(milliseconds: 280),
-                    curve: Curves.easeOut,
-                    builder: (context, l, _) => _PreviewBox(look: l),
+                child: TweenAnimationBuilder<Look>(
+                  tween: _LookTween(end: preview),
+                  duration: const Duration(milliseconds: 280),
+                  curve: Curves.easeOut,
+                  builder: (context, l, _) => Column(
+                    children: [
+                      // The TDB app icon as it would look on the home screen,
+                      // on the page above the preview.
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(0, 4, 0, 16),
+                        child: _AppIcon(look: l),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: _PreviewBox(look: l),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -149,35 +161,47 @@ class _ColorScreenState extends State<ColorScreen> {
 
 /// Base's tinted box with the phone peeking up from its bottom edge: the
 /// draft colour washed into the draft mode's background, and the real home.
-/// Base's tinted box: the TDB app icon as it would look on the home screen,
-/// and below it the phone peeking up from the bottom edge with the dashboard
-/// skeleton, both in the chosen Горим and Өнгө.
+/// The TDB app icon with the soft shadow it has on a home screen.
+class _AppIcon extends StatelessWidget {
+  const _AppIcon({required this.look});
+  final Look look;
+
+  static const _size = 60.0;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      // The icon's own corner: 120 of 512.
+      borderRadius: BorderRadius.circular(_size * 120 / 512),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: look.isDark ? 0.35 : 0.12),
+          blurRadius: 16,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: TdbAppIcon(look: look, size: _size),
+  );
+}
+
+/// Base's tinted box with the phone peeking up from its bottom edge: the
+/// dashboard skeleton in the chosen Горим and Өнгө.
 class _PreviewBox extends StatelessWidget {
   const _PreviewBox({required this.look});
   final Look look;
-
-  static const _iconSize = 56.0;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, c) {
-        const iconTop = 20.0;
-        const top = iconTop + _iconSize + 18;
-        // Show the phone from the status bar down to about the banner.
+        const top = 22.0;
         const phone = TdboHomePreview.phone;
-        // Sized as before the icon was added (from a 22px top), so the phone
-        // keeps its size and simply runs further past the bottom edge.
-        final byHeight =
-            (c.maxHeight - 22) / (phone.height / phone.width * 0.66);
-        final width = byHeight.clamp(120.0, c.maxWidth * 0.62);
+        // A fixed share of the width; the box's height only decides how much
+        // of the phone shows.
+        final width = c.maxWidth * 0.62;
         // The frame's 40px corners, scaled.
         final radius = 40 * width / phone.width;
-        final shadow = BoxShadow(
-          color: Colors.black.withValues(alpha: look.isDark ? 0.35 : 0.10),
-          blurRadius: 24,
-          offset: const Offset(0, 6),
-        );
 
         // The phone is taller than the box on purpose: it runs past the
         // bottom edge and is clipped there. A Positioned child gets unbounded
@@ -192,23 +216,6 @@ class _PreviewBox extends StatelessWidget {
           child: Stack(
             children: [
               Positioned(
-                top: iconTop,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      // The icon's own corner: 120 of 512.
-                      borderRadius: BorderRadius.circular(
-                        _iconSize * 120 / 512,
-                      ),
-                      boxShadow: [shadow],
-                    ),
-                    child: TdbAppIcon(look: look, size: _iconSize),
-                  ),
-                ),
-              ),
-              Positioned(
                 top: top,
                 left: 0,
                 right: 0,
@@ -218,7 +225,15 @@ class _PreviewBox extends StatelessWidget {
                       borderRadius: BorderRadius.vertical(
                         top: Radius.circular(radius),
                       ),
-                      boxShadow: [shadow],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: look.isDark ? 0.35 : 0.10,
+                          ),
+                          blurRadius: 24,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.vertical(
