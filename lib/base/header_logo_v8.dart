@@ -83,10 +83,13 @@ class _LogoVariant {
   final double seconds;
 }
 
-/// v6's knot and look, spelled out; only [_LogoVariant.seconds] differs.
+/// v6's knot and look, spelled out; only [_LogoVariant.seconds] and the
+/// knot's width differ.
 const _v8 = _LogoVariant(
   name: 'Лого v8 — v6, удаан, зөөлөн',
-  knots: [_KnotSpec(x: 0.74, width: 0.62, tilt: 0)],
+  // Smaller than retail_home's v8 (width 0.62) so the logo stays inside the
+  // header; same centre.
+  knots: [_KnotSpec(x: 0.74, width: 0.42, tilt: 0)],
   angle: 0,
   anchor: 12,
   fill: 0.2,
