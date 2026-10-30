@@ -215,8 +215,8 @@ class _Pickers extends StatelessWidget {
 
 /// The picker as the TDBO 2.0 bottom sheet (Figma 7jLPHUpWV7s9UK49iIbVhR,
 /// «Bottom Sheet / Theme selector» 312:102): white, top corners 18, padding
-/// 32/32/42/32, gap 20 — title, app icon, a 280-high preview card, Горим,
-/// Өнгө and Хадгалах. Picks are a draft shown in the sheet; the app changes
+/// 32/32/42/32, gap 20 — app icon, a 280-high preview card, Горим, Өнгө and
+/// Хадгалах (no title). Picks are a draft shown in the sheet; the app changes
 /// only on Хадгалах, and closing the sheet keeps the old theme.
 Future<void> showThemeSheet(
   BuildContext context,
@@ -278,17 +278,6 @@ class _ThemeSheetState extends State<ThemeSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // The sheet's title style: Manrope Bold 24, #424242.
-          Text(
-            'Өнгө солих',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              height: 1.6,
-              color: look.isDark ? look.ink : const Color(0xFF424242),
-            ),
-          ),
-          const SizedBox(height: 20),
           TweenAnimationBuilder<Look>(
             tween: _LookTween(end: preview),
             duration: const Duration(milliseconds: 280),
