@@ -131,50 +131,7 @@ class _ColorScreenState extends State<ColorScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _Label('Горим', look),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        for (final m in ModeChoice.values)
-                          _ModeTile(
-                            mode: m,
-                            selected: m == _current.mode,
-                            ring: look.accent,
-                            look: look,
-                            onTap: () => _set(_current.copyWith(mode: m)),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    _Label('Өнгө', look),
-                    const SizedBox(height: 10),
-                    // Inset 8px so the circles centre under the 68-wide mode tiles.
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: LayoutBuilder(
-                        builder: (context, c) {
-                          const perRow = 4;
-                          const d = 52.0;
-                          final gap = (c.maxWidth - perRow * d) / (perRow - 1);
-                          return Wrap(
-                            spacing: gap,
-                            runSpacing: 14,
-                            children: [
-                              for (final a in Accent.values)
-                                _Swatch(
-                                  color: a.color,
-                                  size: d,
-                                  selected: a == _current.accent,
-                                  ring: look.accent,
-                                  onTap: () =>
-                                      _set(_current.copyWith(accent: a)),
-                                ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
+                    _Pickers(current: _current, look: look, onChanged: _set),
                     const SizedBox(height: 12),
                   ],
                 ),
@@ -182,6 +139,157 @@ class _ColorScreenState extends State<ColorScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Горим and Өнгө, shared by the full-screen page and the bottom sheet.
+class _Pickers extends StatelessWidget {
+  const _Pickers({
+    required this.current,
+    required this.look,
+    required this.onChanged,
+  });
+
+  final ThemeSpec current;
+  final Look look;
+  final ValueChanged<ThemeSpec> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Label('Горим', look),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            for (final m in ModeChoice.values)
+              _ModeTile(
+                mode: m,
+                selected: m == current.mode,
+                ring: look.accent,
+                look: look,
+                onTap: () => onChanged(current.copyWith(mode: m)),
+              ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        _Label('Өнгө', look),
+        const SizedBox(height: 10),
+        // Inset 8px so the circles centre under the 68-wide mode tiles.
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: LayoutBuilder(
+            builder: (context, c) {
+              const perRow = 4;
+              const d = 52.0;
+              final gap = (c.maxWidth - perRow * d) / (perRow - 1);
+              return Wrap(
+                spacing: gap,
+                runSpacing: 14,
+                children: [
+                  for (final a in Accent.values)
+                    _Swatch(
+                      color: a.color,
+                      size: d,
+                      selected: a == current.accent,
+                      ring: look.accent,
+                      onTap: () => onChanged(current.copyWith(accent: a)),
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The picker as the TDBO 2.0 bottom sheet (Figma 7jLPHUpWV7s9UK49iIbVhR,
+/// «Bottom Sheet / Theme selector» 312:102): white, top corners 18, padding
+/// 32/32/42/32, gap 20 — title, app icon, a 280-high preview card, Горим and
+/// Өнгө. Like the page, each tap applies at once.
+Future<void> showThemeSheet(
+  BuildContext context,
+  ValueNotifier<ThemeSpec> spec,
+) => showModalBottomSheet<void>(
+  context: context,
+  isScrollControlled: true,
+  backgroundColor: Colors.transparent,
+  // The Figma previews' overlay: black at 60%.
+  barrierColor: Colors.black.withValues(alpha: 0.6),
+  builder: (_) => ThemeSheet(spec: spec),
+);
+
+class ThemeSheet extends StatefulWidget {
+  const ThemeSheet({super.key, required this.spec});
+
+  final ValueNotifier<ThemeSpec> spec;
+
+  @override
+  State<ThemeSheet> createState() => _ThemeSheetState();
+}
+
+class _ThemeSheetState extends State<ThemeSheet> {
+  ThemeSpec get _current => widget.spec.value;
+
+  void _set(ThemeSpec next) {
+    if (next == _current) return;
+    HapticFeedback.selectionClick();
+    setState(() => widget.spec.value = next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final look = Look.read(context);
+    final platform = MediaQuery.platformBrightnessOf(context);
+    final preview = Look.of(
+      resolveMode(_current.mode, platform),
+      _current.accent,
+    );
+    return Container(
+      decoration: BoxDecoration(
+        color: look.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      padding: const EdgeInsets.fromLTRB(32, 32, 32, 42),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // The sheet's title style: Manrope Bold 24, #424242.
+          Text(
+            'Өнгө солих',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              height: 1.6,
+              color: look.isDark ? look.ink : const Color(0xFF424242),
+            ),
+          ),
+          const SizedBox(height: 20),
+          TweenAnimationBuilder<Look>(
+            tween: _LookTween(end: preview),
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOut,
+            builder: (context, l, _) => Column(
+              children: [
+                Center(child: _AppIcon(look: l)),
+                const SizedBox(height: 20),
+                SizedBox(
+                  height: 280,
+                  child: _PreviewBox(look: l, accent: _current.accent),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          _Pickers(current: _current, look: look, onChanged: _set),
+        ],
       ),
     );
   }

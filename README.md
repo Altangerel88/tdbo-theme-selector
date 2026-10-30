@@ -16,6 +16,7 @@ style of Base's theme picker.
 ```sh
 flutter pub get
 flutter run -t lib/main_base.dart        # Өнгө солих page
+flutter run -t lib/main_sheet.dart       # the same picker as a bottom sheet over the home
 flutter run                              # earlier Revolut-style carousel (v1)
 ```
 
