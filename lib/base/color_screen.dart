@@ -150,11 +150,15 @@ class _Pickers extends StatelessWidget {
     required this.current,
     required this.look,
     required this.onChanged,
+    this.ring,
   });
 
   final ThemeSpec current;
   final Look look;
   final ValueChanged<ThemeSpec> onChanged;
+
+  /// Selection-ring colour; defaults to the surface's accent.
+  final Color? ring;
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +174,7 @@ class _Pickers extends StatelessWidget {
               _ModeTile(
                 mode: m,
                 selected: m == current.mode,
-                ring: look.accent,
+                ring: ring ?? look.accent,
                 look: look,
                 onTap: () => onChanged(current.copyWith(mode: m)),
               ),
@@ -196,7 +200,7 @@ class _Pickers extends StatelessWidget {
                       color: a.color,
                       size: d,
                       selected: a == current.accent,
-                      ring: look.accent,
+                      ring: ring ?? look.accent,
                       onTap: () => onChanged(current.copyWith(accent: a)),
                     ),
                 ],
@@ -211,8 +215,9 @@ class _Pickers extends StatelessWidget {
 
 /// The picker as the TDBO 2.0 bottom sheet (Figma 7jLPHUpWV7s9UK49iIbVhR,
 /// «Bottom Sheet / Theme selector» 312:102): white, top corners 18, padding
-/// 32/32/42/32, gap 20 — title, app icon, a 280-high preview card, Горим and
-/// Өнгө. Like the page, each tap applies at once.
+/// 32/32/42/32, gap 20 — title, app icon, a 280-high preview card, Горим,
+/// Өнгө and Хадгалах. Picks are a draft shown in the sheet; the app changes
+/// only on Хадгалах, and closing the sheet keeps the old theme.
 Future<void> showThemeSheet(
   BuildContext context,
   ValueNotifier<ThemeSpec> spec,
@@ -235,22 +240,34 @@ class ThemeSheet extends StatefulWidget {
 }
 
 class _ThemeSheetState extends State<ThemeSheet> {
-  ThemeSpec get _current => widget.spec.value;
+  late ThemeSpec _draft = widget.spec.value;
 
   void _set(ThemeSpec next) {
-    if (next == _current) return;
+    if (next == _draft) return;
     HapticFeedback.selectionClick();
-    setState(() => widget.spec.value = next);
+    setState(() => _draft = next);
+  }
+
+  void _save() {
+    widget.spec.value = _draft;
+    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
     final look = Look.read(context);
     final platform = MediaQuery.platformBrightnessOf(context);
-    final preview = Look.of(
-      resolveMode(_current.mode, platform),
-      _current.accent,
+    final preview = Look.of(resolveMode(_draft.mode, platform), _draft.accent);
+    // The sheet keeps the app's current surface; rings and the button take
+    // the draft colour, tuned for that surface.
+    final applied = resolveMode(widget.spec.value.mode, platform);
+    final accent = Look.of(
+      look.isDark
+          ? (applied == ModeChoice.baraan ? ModeChoice.baraan : ModeChoice.khar)
+          : ModeChoice.tsagaan,
+      _draft.accent,
     );
+    final changed = _draft != widget.spec.value;
     return Container(
       decoration: BoxDecoration(
         color: look.surface,
@@ -282,13 +299,20 @@ class _ThemeSheetState extends State<ThemeSheet> {
                 const SizedBox(height: 20),
                 SizedBox(
                   height: 280,
-                  child: _PreviewBox(look: l, accent: _current.accent),
+                  child: _PreviewBox(look: l, accent: _draft.accent),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 20),
-          _Pickers(current: _current, look: look, onChanged: _set),
+          _Pickers(
+            current: _draft,
+            look: look,
+            ring: accent.accent,
+            onChanged: _set,
+          ),
+          const SizedBox(height: 20),
+          _SaveButton(look: accent, enabled: changed, onPressed: _save),
         ],
       ),
     );
@@ -568,5 +592,51 @@ class _Ring extends StatelessWidget {
       ),
     ),
     child: child,
+  );
+}
+
+/// The bottom sheet's primary button (48 high, corners 16, Manrope SemiBold
+/// 16), filled with the colour being picked; faded until something changes.
+class _SaveButton extends StatelessWidget {
+  const _SaveButton({
+    required this.look,
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  final Look look;
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    enabled: enabled,
+    child: GestureDetector(
+      onTap: enabled ? onPressed : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        height: 48,
+        width: double.infinity,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: look.accent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 220),
+          opacity: enabled ? 1 : 0.5,
+          child: Text(
+            'Хадгалах',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              height: 1.5,
+              color: look.onAccent,
+            ),
+          ),
+        ),
+      ),
+    ),
   );
 }
